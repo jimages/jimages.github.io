@@ -10,8 +10,8 @@
 <meta name="keywords" content="线性代数,机器学习">
 <meta property="og:type" content="article">
 <meta property="og:title" content="为什么我们要使用LU或者QR计算线性回归参数而不是用逆矩阵？">
-<meta property="og:url" content="https://www.jimages.net/2019/07/14/why-lu-or-qr-not-inverse/index.html">
-<meta property="og:site_name" content="生活技术与学习">
+<meta property="og:url" content="https://zackwang.io/2019/07/14/why-lu-or-qr-not-inverse/index.html">
+<meta property="og:site_name" content="zackwang.io">
 <meta property="og:description" content="线性回归是最基本的机器学习模型，我们通过学习机器学习中本文假设你对线性回归和矩阵论有一定的了解，我们探索两种通过矩阵求解线性回归的相关的参数的一个算法，并且探究两种算法的区别。 通过求解逆矩阵求解线性回归的参数 今天遇到的问题是，就是在计算线性回归的参数的时候，我们一般学过线性回归的同学第一直觉能想到的公式就是： $$ \hat{w}^* = (X^TX)^{-1}X^Ty $$ 倘若你没有学过这">
 <meta property="og:locale" content="zh-CN">
 <meta property="og:updated_time" content="2019-07-14T06:56:16.772Z">
@@ -58,17 +58,17 @@
     <span id="nav">
       <ul>
          
-          <li><a href="/">主页</a></li>
+          <li><a href="/">index</a></li>
          
           <li><a href="/about/">关于</a></li>
          
-          <li><a href="/archives/">文章</a></li>
+          <li><a href="/archives/">posts</a></li>
          
-          <li><a href="/tags/">标签</a></li>
+          <li><a href="/tags/">tags</a></li>
          
-          <li><a href="/categories/">分类</a></li>
+          <li><a href="/categories/">categories</a></li>
          
-          <li><a href="https://github.com/jimages">项目</a></li>
+          <li><a href="https://github.com/jimages">github</a></li>
         
       </ul>
     </span>
@@ -92,16 +92,16 @@
     <br/>
     <div id="share" style="display: none">
       <ul>
-  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=https://www.jimages.net/2019/07/14/why-lu-or-qr-not-inverse/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
-  <li><a class="icon" href="https://twitter.com/share?url=https://www.jimages.net/2019/07/14/why-lu-or-qr-not-inverse/&text=为什么我们要使用LU或者QR计算线性回归参数而不是用逆矩阵？"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
-  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=https://www.jimages.net/2019/07/14/why-lu-or-qr-not-inverse/&title=为什么我们要使用LU或者QR计算线性回归参数而不是用逆矩阵？"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
-  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=https://www.jimages.net/2019/07/14/why-lu-or-qr-not-inverse/&is_video=false&description=为什么我们要使用LU或者QR计算线性回归参数而不是用逆矩阵？"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
-  <li><a class="icon" href="mailto:?subject=为什么我们要使用LU或者QR计算线性回归参数而不是用逆矩阵？&body=Check out this article: https://www.jimages.net/2019/07/14/why-lu-or-qr-not-inverse/"><i class="fas fa-envelope " aria-hidden="true"></i></a></li>
-  <li><a class="icon" href="https://getpocket.com/save?url=https://www.jimages.net/2019/07/14/why-lu-or-qr-not-inverse/&title=为什么我们要使用LU或者QR计算线性回归参数而不是用逆矩阵？"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
-  <li><a class="icon" href="http://reddit.com/submit?url=https://www.jimages.net/2019/07/14/why-lu-or-qr-not-inverse/&title=为什么我们要使用LU或者QR计算线性回归参数而不是用逆矩阵？"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
-  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=https://www.jimages.net/2019/07/14/why-lu-or-qr-not-inverse/&title=为什么我们要使用LU或者QR计算线性回归参数而不是用逆矩阵？"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
-  <li><a class="icon" href="http://digg.com/submit?url=https://www.jimages.net/2019/07/14/why-lu-or-qr-not-inverse/&title=为什么我们要使用LU或者QR计算线性回归参数而不是用逆矩阵？"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
-  <li><a class="icon" href="http://www.tumblr.com/share/link?url=https://www.jimages.net/2019/07/14/why-lu-or-qr-not-inverse/&name=为什么我们要使用LU或者QR计算线性回归参数而不是用逆矩阵？&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=https://zackwang.io/2019/07/14/why-lu-or-qr-not-inverse/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=https://zackwang.io/2019/07/14/why-lu-or-qr-not-inverse/&text=为什么我们要使用LU或者QR计算线性回归参数而不是用逆矩阵？"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=https://zackwang.io/2019/07/14/why-lu-or-qr-not-inverse/&title=为什么我们要使用LU或者QR计算线性回归参数而不是用逆矩阵？"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=https://zackwang.io/2019/07/14/why-lu-or-qr-not-inverse/&is_video=false&description=为什么我们要使用LU或者QR计算线性回归参数而不是用逆矩阵？"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=为什么我们要使用LU或者QR计算线性回归参数而不是用逆矩阵？&body=Check out this article: https://zackwang.io/2019/07/14/why-lu-or-qr-not-inverse/"><i class="fas fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=https://zackwang.io/2019/07/14/why-lu-or-qr-not-inverse/&title=为什么我们要使用LU或者QR计算线性回归参数而不是用逆矩阵？"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=https://zackwang.io/2019/07/14/why-lu-or-qr-not-inverse/&title=为什么我们要使用LU或者QR计算线性回归参数而不是用逆矩阵？"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=https://zackwang.io/2019/07/14/why-lu-or-qr-not-inverse/&title=为什么我们要使用LU或者QR计算线性回归参数而不是用逆矩阵？"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=https://zackwang.io/2019/07/14/why-lu-or-qr-not-inverse/&title=为什么我们要使用LU或者QR计算线性回归参数而不是用逆矩阵？"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=https://zackwang.io/2019/07/14/why-lu-or-qr-not-inverse/&name=为什么我们要使用LU或者QR计算线性回归参数而不是用逆矩阵？&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
 </ul>
 
     </div>
@@ -125,7 +125,7 @@
 
     <div class="meta">
       <span class="author" itemprop="author" itemscope itemtype="http://schema.org/Person">
-        <span itemprop="name">生活技术与学习</span>
+        <span itemprop="name">zackwang.io</span>
       </span>
       
     <div class="postdate">
@@ -235,17 +235,17 @@ $$
     <div id="nav-footer" style="display: none">
       <ul>
          
-          <li><a href="/">主页</a></li>
+          <li><a href="/">index</a></li>
          
           <li><a href="/about/">关于</a></li>
          
-          <li><a href="/archives/">文章</a></li>
+          <li><a href="/archives/">posts</a></li>
          
-          <li><a href="/tags/">标签</a></li>
+          <li><a href="/tags/">tags</a></li>
          
-          <li><a href="/categories/">分类</a></li>
+          <li><a href="/categories/">categories</a></li>
          
-          <li><a href="https://github.com/jimages">项目</a></li>
+          <li><a href="https://github.com/jimages">github</a></li>
         
       </ul>
     </div>
@@ -256,16 +256,16 @@ $$
 
     <div id="share-footer" style="display: none">
       <ul>
-  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=https://www.jimages.net/2019/07/14/why-lu-or-qr-not-inverse/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" href="https://twitter.com/share?url=https://www.jimages.net/2019/07/14/why-lu-or-qr-not-inverse/&text=为什么我们要使用LU或者QR计算线性回归参数而不是用逆矩阵？"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=https://www.jimages.net/2019/07/14/why-lu-or-qr-not-inverse/&title=为什么我们要使用LU或者QR计算线性回归参数而不是用逆矩阵？"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=https://www.jimages.net/2019/07/14/why-lu-or-qr-not-inverse/&is_video=false&description=为什么我们要使用LU或者QR计算线性回归参数而不是用逆矩阵？"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" href="mailto:?subject=为什么我们要使用LU或者QR计算线性回归参数而不是用逆矩阵？&body=Check out this article: https://www.jimages.net/2019/07/14/why-lu-or-qr-not-inverse/"><i class="fas fa-envelope fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" href="https://getpocket.com/save?url=https://www.jimages.net/2019/07/14/why-lu-or-qr-not-inverse/&title=为什么我们要使用LU或者QR计算线性回归参数而不是用逆矩阵？"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" href="http://reddit.com/submit?url=https://www.jimages.net/2019/07/14/why-lu-or-qr-not-inverse/&title=为什么我们要使用LU或者QR计算线性回归参数而不是用逆矩阵？"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=https://www.jimages.net/2019/07/14/why-lu-or-qr-not-inverse/&title=为什么我们要使用LU或者QR计算线性回归参数而不是用逆矩阵？"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" href="http://digg.com/submit?url=https://www.jimages.net/2019/07/14/why-lu-or-qr-not-inverse/&title=为什么我们要使用LU或者QR计算线性回归参数而不是用逆矩阵？"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" href="http://www.tumblr.com/share/link?url=https://www.jimages.net/2019/07/14/why-lu-or-qr-not-inverse/&name=为什么我们要使用LU或者QR计算线性回归参数而不是用逆矩阵？&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=https://zackwang.io/2019/07/14/why-lu-or-qr-not-inverse/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=https://zackwang.io/2019/07/14/why-lu-or-qr-not-inverse/&text=为什么我们要使用LU或者QR计算线性回归参数而不是用逆矩阵？"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=https://zackwang.io/2019/07/14/why-lu-or-qr-not-inverse/&title=为什么我们要使用LU或者QR计算线性回归参数而不是用逆矩阵？"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=https://zackwang.io/2019/07/14/why-lu-or-qr-not-inverse/&is_video=false&description=为什么我们要使用LU或者QR计算线性回归参数而不是用逆矩阵？"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=为什么我们要使用LU或者QR计算线性回归参数而不是用逆矩阵？&body=Check out this article: https://zackwang.io/2019/07/14/why-lu-or-qr-not-inverse/"><i class="fas fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=https://zackwang.io/2019/07/14/why-lu-or-qr-not-inverse/&title=为什么我们要使用LU或者QR计算线性回归参数而不是用逆矩阵？"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=https://zackwang.io/2019/07/14/why-lu-or-qr-not-inverse/&title=为什么我们要使用LU或者QR计算线性回归参数而不是用逆矩阵？"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=https://zackwang.io/2019/07/14/why-lu-or-qr-not-inverse/&title=为什么我们要使用LU或者QR计算线性回归参数而不是用逆矩阵？"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=https://zackwang.io/2019/07/14/why-lu-or-qr-not-inverse/&title=为什么我们要使用LU或者QR计算线性回归参数而不是用逆矩阵？"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=https://zackwang.io/2019/07/14/why-lu-or-qr-not-inverse/&name=为什么我们要使用LU或者QR计算线性回归参数而不是用逆矩阵？&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
 </ul>
 
     </div>
@@ -290,17 +290,17 @@ $$
     <nav>
       <ul>
         
-          <li><a href="/">主页</a></li>
+          <li><a href="/">index</a></li>
         
           <li><a href="/about/">关于</a></li>
         
-          <li><a href="/archives/">文章</a></li>
+          <li><a href="/archives/">posts</a></li>
         
-          <li><a href="/tags/">标签</a></li>
+          <li><a href="/tags/">tags</a></li>
         
-          <li><a href="/categories/">分类</a></li>
+          <li><a href="/categories/">categories</a></li>
         
-          <li><a href="https://github.com/jimages">项目</a></li>
+          <li><a href="https://github.com/jimages">github</a></li>
         
       </ul>
     </nav>
