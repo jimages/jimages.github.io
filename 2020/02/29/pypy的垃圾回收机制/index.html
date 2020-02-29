@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang=en>
+<head><meta name="generator" content="Hexo 3.9.0">
+    <!-- hexo-inject:begin --><!-- hexo-inject:end --><!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="description" content="什么是pypy pypy与python是同一门语言,只不过python是解释器,而pypy是JIT编译器,什么是JIT编译器可能需要一篇博客来说清楚.总的来说就是,两者的比较是,Python在运行的时候会将Python解释,然后运行.而pypy则是在运行这个代码的时候先将这一行代码的时候进行编译,然后再运行. 那这两者有什么区别呢?我们的程序永远不可能是顺序执行的,也就是说我们的代码必定用重复使用">
+<meta name="keywords" content="pypy">
+<meta property="og:type" content="article">
+<meta property="og:title" content="pypy的垃圾回收机制">
+<meta property="og:url" content="https://zackwang.io/2020/02/29/pypy的垃圾回收机制/index.html">
+<meta property="og:site_name" content="zackwang.io">
+<meta property="og:description" content="什么是pypy pypy与python是同一门语言,只不过python是解释器,而pypy是JIT编译器,什么是JIT编译器可能需要一篇博客来说清楚.总的来说就是,两者的比较是,Python在运行的时候会将Python解释,然后运行.而pypy则是在运行这个代码的时候先将这一行代码的时候进行编译,然后再运行. 那这两者有什么区别呢?我们的程序永远不可能是顺序执行的,也就是说我们的代码必定用重复使用">
+<meta property="og:locale" content="en">
+<meta property="og:updated_time" content="2020-02-29T14:47:17.819Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="pypy的垃圾回收机制">
+<meta name="twitter:description" content="什么是pypy pypy与python是同一门语言,只不过python是解释器,而pypy是JIT编译器,什么是JIT编译器可能需要一篇博客来说清楚.总的来说就是,两者的比较是,Python在运行的时候会将Python解释,然后运行.而pypy则是在运行这个代码的时候先将这一行代码的时候进行编译,然后再运行. 那这两者有什么区别呢?我们的程序永远不可能是顺序执行的,也就是说我们的代码必定用重复使用">
+    
+    
+        
+          
+              <link rel="shortcut icon" href="/images/favicon.ico">
+          
+        
+        
+          
+            <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+          
+        
+        
+          
+            <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+          
+        
+    
+    <!-- title -->
+    <title>pypy的垃圾回收机制</title>
+    <!-- styles -->
+    <link rel="stylesheet" href="/css/style.css">
+    <!-- persian styles -->
+    
+      <link rel="stylesheet" href="/css/rtl.css">
+    
+    <!-- rss --><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+    
+    
+</head>
+
+<body class="max-width mx-auto px3 ltr">    
+      <!-- hexo-inject:begin --><!-- hexo-inject:end --><div id="header-post">
+  <a id="menu-icon" href="#"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fas fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+         
+          <li><a href="/">index</a></li>
+         
+          <li><a href="/about/">About</a></li>
+         
+          <li><a href="/archives/">posts</a></li>
+         
+          <li><a href="/tags/">tags</a></li>
+         
+          <li><a href="/categories/">categories</a></li>
+         
+          <li><a href="https://github.com/jimages">github</a></li>
+        
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        
+        <li><a class="icon" href="/2019/11/10/双11如何选衣服/"><i class="fas fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" href="#"><i class="fas fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">Previous post</span>
+      <span id="i-next" class="info" style="display:none;">Next post</span>
+      <span id="i-top" class="info" style="display:none;">Back to top</span>
+      <span id="i-share" class="info" style="display:none;">Share post</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=https://zackwang.io/2020/02/29/pypy的垃圾回收机制/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=https://zackwang.io/2020/02/29/pypy的垃圾回收机制/&text=pypy的垃圾回收机制"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=https://zackwang.io/2020/02/29/pypy的垃圾回收机制/&title=pypy的垃圾回收机制"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=https://zackwang.io/2020/02/29/pypy的垃圾回收机制/&is_video=false&description=pypy的垃圾回收机制"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=pypy的垃圾回收机制&body=Check out this article: https://zackwang.io/2020/02/29/pypy的垃圾回收机制/"><i class="fas fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=https://zackwang.io/2020/02/29/pypy的垃圾回收机制/&title=pypy的垃圾回收机制"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=https://zackwang.io/2020/02/29/pypy的垃圾回收机制/&title=pypy的垃圾回收机制"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=https://zackwang.io/2020/02/29/pypy的垃圾回收机制/&title=pypy的垃圾回收机制"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=https://zackwang.io/2020/02/29/pypy的垃圾回收机制/&title=pypy的垃圾回收机制"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=https://zackwang.io/2020/02/29/pypy的垃圾回收机制/&name=pypy的垃圾回收机制&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    <div id="toc">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#null"><span class="toc-number">1.</span> <span class="toc-text">什么是pypy</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#null"><span class="toc-number">2.</span> <span class="toc-text">cpython的垃圾回收机制</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#null"><span class="toc-number">3.</span> <span class="toc-text">pypy的垃圾回收机制</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#null"><span class="toc-number">3.1.</span> <span class="toc-text">垃圾回收内存布局</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#null"><span class="toc-number">3.2.</span> <span class="toc-text">垃圾回收步骤</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#null"><span class="toc-number">4.</span> <span class="toc-text">参考</span></a></li></ol>
+    </div>
+  </span>
+</div>
+
+    
+    <div class="content index py4">
+        
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle" itemprop="name headline">
+        pypy的垃圾回收机制
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">zackwang.io</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2020-02-28T16:00:00.000Z" itemprop="datePublished">2020-02-29</time>
+        
+        (Updated: <time datetime="2020-02-29T14:47:17.819Z" itemprop="dateModified">2020-02-29</time>)
+        
+      
+    </div>
+
+
+      
+    <div class="article-category">
+        <i class="fas fa-archive"></i>
+        <a class="category-link" href="/categories/编程/">编程</a>
+    </div>
+
+
+      
+    <div class="article-tag">
+        <i class="fas fa-tag"></i>
+        <a class="tag-link" href="/tags/pypy/">pypy</a>
+    </div>
+
+
+    </div>
+  </header>
+  
+
+  <div class="content" itemprop="articleBody">
+    <h2>什么是pypy</h2>
+<p>pypy与python是同一门语言,只不过python是解释器,而pypy是JIT编译器,什么是JIT编译器可能需要一篇博客来说清楚.总的来说就是,两者的比较是,Python在运行的时候会将Python解释,然后运行.而pypy则是在运行这个代码的时候先将这一行代码的时候进行编译,然后再运行.</p>
+<p>那这两者有什么区别呢?我们的程序永远不可能是顺序执行的,也就是说我们的代码必定用重复使用的区域,通过JIT技术能让重复执行的代码区域省去解释的开销.</p>
+<p>我们以一个中国人想通过一本英文菜谱做饭举例:</p>
+<ul>
+<li>静态编译(static compile):先把整本英文书翻译成中文再做菜.</li>
+<li>解释器(interpreter):做菜的时候直接读英文,在脑子里翻译成中文然后做菜</li>
+<li>JIT(just-in-time compile):如果这个菜谱没有中文,就先只把这个菜谱翻译成中文,然后读中文,如果这个菜谱以前翻译过,则直接使用之前翻译的中文,否则把这个菜英文翻译成中文</li>
+</ul>
+<h2>cpython的垃圾回收机制</h2>
+<p>cpython(也就是最经典python)的垃圾回收机制是引用计数回收,什么是引用计数回收呢,就是说如果你有一个变量使用了一块区域,ok,这个区域别标记成为1,如果有两个变量,则计数值标记成2.</p>
+<p>当我们的编译器发现某一个变量使用完毕的时候(例如执行完某一个函数,返回)然后那么这个变量的区域的计数值就会减去1,然后判断这个计数值是否等于0,如果等于0则销毁这块区域.也就是说,我们用完了某一个变量,不用管,cpython会自动把这个变量销毁.所以我们在使用python打开一个文件的时候,有时候我们忘记写了关闭文件也没事,也不会内存溢出.python打开一个socket的时候,忘记了关闭也没事,当应用计数值到0,python会自动帮我们销毁.所以我们写python的时候非常舒心,都不需要进行内存管理.这样做的好处的就是我们把这些复杂的细节屏蔽掉,对于非专业用户来说简化了不少,这是python的一大优势.</p>
+<h2>pypy的垃圾回收机制</h2>
+<p>cpython这么做为了简单,在性能上做出一点牺牲无可厚非,或者说让python有了现在的发展.不过pypy这个是想在cpython的性能上补足短板的编程语言自然就不能这么做了.所以pypy使用的不是引用计数机制,虽然它的确也有垃圾回收.第一个明显的不同就是<strong>pypy不是引用计数</strong>这意味着当最后一个引用某一个资源的变量离开作用域的时候,这个资源并不会立即销毁.例如你打开一个文件,然后你没有关闭这个文件,然后这个函数返回,离开了变量的作用域,这个文件有可能并没有保存,还存在于buffer中.还有一种情况 就是比如你的文件描述符(fd)没有正确的关闭,然后一直打开新的文件描述符,这个是你就会超过系统限制(limits)然后程序崩溃掉.同时pypy还有full gc的问题,就是如果你的垃圾积累了足够多,pypy的gc可能会the whole world stop 10~100ms的样子,然后做垃圾回收.所以如果对延时要求特别低的程序,还是写静态语言吧.</p>
+<h3>垃圾回收内存布局</h3>
+<p>pypy采用的是Incminimark的垃圾回收引擎,这是一个增量垃圾回收,增量垃圾回收的目的是使一次full gc变成多个步骤,然后一次一个步骤,通过这样的方式降低每一次程序停止的时间.pypy的内存区域分成两块:&quot;新生区&quot;(新生成的变量都是在这块区域中分配),以及&quot;大区&quot;,然后将&quot;大区&quot;分成多片,以便分布进行垃圾回收,从而让每一步的停止时间都不算长.</p>
+<h3>垃圾回收步骤</h3>
+<ul>
+<li>新生区:所有的新对象都是分配于&quot;新生区&quot;,当然&quot;新生区&quot;满的时候,遍历&quot;新生区&quot;还存活的对象,移动到&quot;大区&quot;中(有时候也会扫描新生区里面的所有对象以找到谁是存活的,谁已经死掉了),这边步骤被称为&quot;小回收&quot;</li>
+<li>大区:在某些条件下,会在&quot;小回收&quot;后触发&quot;大回收&quot;,这就是传统的标识删除方法了(mark-and-sweep step),他会扫描所有内存区域,并做标记(三色标记),然后对某些特定的对象做回收操作.但是一次性扫描整个区域真的是太慢了,而且会让程序停下来,所有这里采用了增量方法,也就是一次只扫描一个片.这样单次回收的时间就降低了.</li>
+</ul>
+<h2>参考</h2>
+<ul>
+<li><a href="https://liujiacai.net/blog/2018/08/04/incremental-gc/" target="_blank" rel="noopener">深入浅出垃圾回收（三）增量式 GC</a></li>
+<li><a href="https://morepypy.blogspot.com/2013/10/incremental-garbage-collector-in-pypy.html" target="_blank" rel="noopener">Incremental Garbage Collector in PyPy </a></li>
+<li><a href="https://github.com/rubinius/rubinius-website-archive/blob/cf54187d421275eec7d2db0abd5d4c059755b577/_posts/2013-06-22-concurrent-garbage-collection.markdown" target="_blank" rel="noopener">Concurrent garbage collection</a></li>
+<li><a href="https://app.yinxiang.com/fx/60aa0cfd-47d2-4ac5-ac8d-9b8d7dd323a0" target="_blank" rel="noopener">Garbage Collection in PyPy</a></li>
+</ul>
+
+  </div>
+</article>
+
+    <div class="blog-post-comments">
+        <div id="disqus_thread">
+            <noscript>Please enable JavaScript to view the comments.</noscript>
+        </div>
+    </div>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+         
+          <li><a href="/">index</a></li>
+         
+          <li><a href="/about/">About</a></li>
+         
+          <li><a href="/archives/">posts</a></li>
+         
+          <li><a href="/tags/">tags</a></li>
+         
+          <li><a href="/categories/">categories</a></li>
+         
+          <li><a href="https://github.com/jimages">github</a></li>
+        
+      </ul>
+    </div>
+
+    <div id="toc-footer" style="display: none">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#null"><span class="toc-number">1.</span> <span class="toc-text">什么是pypy</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#null"><span class="toc-number">2.</span> <span class="toc-text">cpython的垃圾回收机制</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#null"><span class="toc-number">3.</span> <span class="toc-text">pypy的垃圾回收机制</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#null"><span class="toc-number">3.1.</span> <span class="toc-text">垃圾回收内存布局</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#null"><span class="toc-number">3.2.</span> <span class="toc-text">垃圾回收步骤</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#null"><span class="toc-number">4.</span> <span class="toc-text">参考</span></a></li></ol>
+    </div>
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=https://zackwang.io/2020/02/29/pypy的垃圾回收机制/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=https://zackwang.io/2020/02/29/pypy的垃圾回收机制/&text=pypy的垃圾回收机制"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=https://zackwang.io/2020/02/29/pypy的垃圾回收机制/&title=pypy的垃圾回收机制"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=https://zackwang.io/2020/02/29/pypy的垃圾回收机制/&is_video=false&description=pypy的垃圾回收机制"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=pypy的垃圾回收机制&body=Check out this article: https://zackwang.io/2020/02/29/pypy的垃圾回收机制/"><i class="fas fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=https://zackwang.io/2020/02/29/pypy的垃圾回收机制/&title=pypy的垃圾回收机制"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=https://zackwang.io/2020/02/29/pypy的垃圾回收机制/&title=pypy的垃圾回收机制"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=https://zackwang.io/2020/02/29/pypy的垃圾回收机制/&title=pypy的垃圾回收机制"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=https://zackwang.io/2020/02/29/pypy的垃圾回收机制/&title=pypy的垃圾回收机制"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=https://zackwang.io/2020/02/29/pypy的垃圾回收机制/&name=pypy的垃圾回收机制&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fas fa-bars fa-lg" aria-hidden="true"></i> Menu</a>
+        <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fas fa-list fa-lg" aria-hidden="true"></i> TOC</a>
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fas fa-share-alt fa-lg" aria-hidden="true"></i> Share</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up fa-lg" aria-hidden="true"></i> Top</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy; 2020 Zachary Wang
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+        
+        <li><a href="/">index</a></li>
+        
+        <li><a href="/about/">About</a></li>
+        
+        <li><a href="/archives/">posts</a></li>
+        
+        <li><a href="/tags/">tags</a></li>
+        
+        <li><a href="/categories/">categories</a></li>
+        
+        <li><a href="https://github.com/jimages">github</a></li>
+        
+      </ul>
+    </nav>
+  </div>
+</footer>
+    </div>
+    <!-- styles -->
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+<link rel="stylesheet" href="/lib/justified-gallery/css/justifiedGallery.min.css">
+
+    <!-- jquery -->
+<script src="/lib/jquery/jquery.min.js"></script>
+<script src="/lib/justified-gallery/js/jquery.justifiedGallery.min.js"></script>
+<script src="/js/main.js"></script>
+<!-- search -->
+
+<!-- Google Analytics -->
+
+<!-- Baidu Analytics -->
+
+<!-- Disqus Comments -->
+
+    <script type="text/javascript">
+        var disqus_shortname = 'jimages-1';
+
+        (function(){
+            var dsq = document.createElement('script');
+            dsq.type = 'text/javascript';
+            dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        }());
+    </script>
+
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@2.7.5/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+
+</body>
+</html>
